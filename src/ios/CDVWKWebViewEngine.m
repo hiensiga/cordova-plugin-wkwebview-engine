@@ -402,6 +402,23 @@ static void * KVOContext = &KVOContext;
         errorUrl = [NSURL URLWithString:[NSString stringWithFormat:@"?error=%@", [message stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]] relativeToURL:errorUrl];
         NSLog(@"%@", [errorUrl absoluteString]);
         [theWebView loadRequest:[NSURLRequest requestWithURL:errorUrl]];
+    } else {
+        // show retry dialog
+        UIAlertController * alertVC = [UIAlertController alertControllerWithTitle:@"Error" message:[error localizedDescription] preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction * retryAction = [UIAlertAction actionWithTitle:@"Retry"
+                                                                style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+                                                                    if (error.userInfo != nil
+                                                                        && [error.userInfo isKindOfClass:[NSDictionary class]]) {
+                                                                        if (error.userInfo[@"NSErrorFailingURLKey"] != nil) {
+                                                                            [theWebView loadRequest:[NSURLRequest requestWithURL:error.userInfo[@"NSErrorFailingURLKey"]]];
+                                                                        } else if (error.userInfo[@"NSErrorFailingURLStringKey"] != nil) {
+                                                                            NSURL * url = [NSURL URLWithString:error.userInfo[@"NSErrorFailingURLStringKey"]];
+                                                                            [theWebView loadRequest:[NSURLRequest requestWithURL:url]];
+                                                                        }
+                                                                    }
+                                                                }];
+        [alertVC addAction:retryAction];
+        [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:alertVC animated:YES completion:nil];
     }
 }
 
